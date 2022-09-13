@@ -1,0 +1,126 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Sep 13 11:04:54 2022
+
+@author: TMudastu
+"""
+import time
+import utils
+import pandas as pd
+from datetime import datetime
+import logging
+import re
+import numpy as np
+
+logger=utils.setlogger(logfile='TGT_FACT_ORDER_LINE_CHRG_PYTHON_IN1560.log')
+
+
+def main():
+    conn,cursor= utils.create_conn()
+    logger.info('connect created')
+    
+    src_query='''
+    select * from BCMPWMT.ORDER_LINE_CHRG
+
+    '''
+    date='''select * from DIM_DAY_SQL_IN1560'''
+    categ='''select * from IN1560.DIM_CHARGE_CATEG_PYTHON_IN1560'''
+    
+
+    order_line_charger=pd.read_sql(src_query,conn)
+    date_df=pd.read_sql(date,conn)
+    categ_df=pd.read_sql(categ,conn)
+    logger.info('Query executed and src data extracted')
+    
+    logger.info('Applying transformations')
+    
+    
+    order_line_charger['SALES_ORDER_NUM']= order_line_charger['SALES_ORDER_NUM'].apply(pd.to_numeric, errors='coerce').fillna(101).astype('int64')
+    order_line_charger['SALES_ORDER_LINE_NUM']= order_line_charger['SALES_ORDER_LINE_NUM'].apply(pd.to_numeric, errors='coerce').fillna(101).astype('int64')
+    order_line_charger['TENANT_ORG_ID']= order_line_charger['TENANT_ORG_ID'].apply(pd.to_numeric, errors='coerce').fillna(101).astype('int64')
+    order_line_charger['CHARGE_CATEG_ID']= order_line_charger['CHARGE_CATEG_ID'].apply(pd.to_numeric, errors='coerce').fillna(101).astype('int64')
+    order_line_charger['CHRG_CATEG_MAP_ID']= order_line_charger['CHRG_CATEG_MAP_ID'].apply(pd.to_numeric, errors='coerce').fillna(101).astype('int64')
+
+
+
+
+    order_line_charger['CHARGE_NM']=order_line_charger['CHARGE_NM'].replace(['NULL','?'],'N\A').str.strip().astype('str')
+    
+    order_line_charger['CHARGE_AMT']=order_line_charger['CHARGE_AMT'].apply(pd.to_numeric,errors='coerce').fillna(0).astype('float')
+
+
+    order_line_charger[ 'CHRG_CRE_DT']=pd.to_datetime(order_line_charger['CHRG_CRE_DT'].replace(['NULL','?'],'01-01-1900').fillna('01-01-1900'),infer_datetime_format=True).dt.date
+
+
+    order_line_charger['CHRG_QTY']= order_line_charger['CHRG_QTY'].apply(pd.to_numeric,errors='coerce').fillna(0).astype('int64')
+    #order_line_charger['CHRG_CRE_DT_KEY']= order_line_charger['CHRG_CRE_DT_KEY'].apply(pd.to_numeric,errors='coerce').fillna(0).astypr('int64')
+
+    #order_line_charger['charge_categ_key']= order_line_charger['CHRG_CRE_DT_KEY'].apply(pd.to_numeric,errors='coerce').fillna(0).astypr('int64')
+
+
+    new_df=pd.merge(order_line_charger,date_df,how='left',left_on='CHRG_CRE_DT',right_on='Date_id').merge(categ_df,on='CHARGE_CATEG_ID',how='left')
+    
+    output=[[]]
+
+
+     
+    truncate_table='''TRUNCATE TABLE STG_FACT_ORDER_LINE_CHRG_PYTHON_IN1560'''
+    cursor.execute(truncate_table)
+    conn.commit()
+    insert_tgt=''
+    
+    cursor.fast_executemany = True
+    
+    for index,row in new_df.iterrows():
+        insert_tgt='''insert into STG_FACT_ORDER_LINE_CHRG_PYTHON_IN1560
+                values(?,?,?,?,?,?,?,?,?,?,?)'''
+
+
+
+
+        collist=['SALES_ORDER_NUM', 'SALES_ORDER_LINE_NUM', 'TENANT_ORG_ID_x',
+                   'CHARGE_CATEG_ID', 'CHRG_CATEG_MAP_ID', 'CHARGE_NM', 'CHARGE_AMT',
+                   'CHRG_CRE_DT', 'CHRG_QTY','Day_key','Charge_categ_Key']
+
+
+
+    cursor.executemany(insert_tgt, new_df[collist].values.tolist())
+     
+    conn.commit()
+    
+    tgt_load='''insert into TGT_FACT_ORDER_LINE_CHRG_PYTHON_IN1560
+                select 
+                SALES_ORDER_NUM,
+                SALES_ORDER_LINE_NUM,
+                TENANT_ORG_ID,
+                CHARGE_CATEG_ID,
+                CHRG_CATEG_MAP_ID,
+                CHARGE_NM,
+                CHARGE_AMT,
+                CHRG_CRE_DT,
+                CHRG_QTY,
+                CHRG_CRE_DT_KEY,
+                charge_categ_key from 
+                STG_FACT_ORDER_LINE_CHRG_PYTHON_IN1560'''
+                
+    cursor.execute(tgt_load)
+    conn.commit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
