@@ -1,0 +1,130 @@
+IIF(ISNULL(CHARGE_CATEG_ID) OR CHARGE_CATEG_ID = 'NULL' OR CHARGE_CATEG_ID = '?','101',LTRIM(RTRIM(TO_BIGINT(CHARGE_CATEG_ID))))
+----------
+TO_INTEGER(IIF(ISNULL(TENANT_ORG_ID),101,TENANT_ORG_ID))
+TO_INTEGER(IIF(ISNULL(DATA_SRC_ID),101,DATA_SRC_ID))
+IIF(  ISNULL(CITY) OR CITY = '?' OR CITY = 'NULL','N/A',LTRIM(RTRIM(CITY)))
+
+TO_INTEGER(IIF(ISNULL(POSTAL_CD) OR  POSTAL_CD = 'NULL' OR
+POSTAL_CD = '?', 101,TO_INTEGER(LTRIM(RTRIM(POSTAL_CD)))))
+
+IIF(ISNULL(DELTD_YN) OR DELTD_YN = 'NULL' OR DELTD_YN = '?',
+'N/A',LTRIM(RTRIM(DELTD_YN)))
+
+IIF(  ISNULL(CRE_USER) OR CRE_USER= '?' OR CRE_USER= 'NULL','N/A',LTRIM(RTRIM(CRE_USER)))
+
+---------------------------------------------
+IIF(ISNULL(CRE_TS) OR IS_DATE(CRE_TS,'MM/DD/YYYY HH24:MI:SS') = 0,
+TO_DATE('01/01/1900', 'MM/DD/YYYY'),TO_DATE(CRE_TS, 'MM/DD/YYYY HH24:MI:SS'))
+
+------------------
+IIF(ISNULL(CRE_TS) OR CRE_TS = 'NULL' OR CRE_TS = '?',TO_DATE('01/01/1900','MM/DD/YYYY'),
+TO_DATE(SUBSTR(CRE_TS,1,20),'MM/DD/YYYY HH12:MI:SSAM'))
+
+---------------Q1-1900-----------
+IIF(ISNULL(CRE_TS) OR CRE_TS = 'NULL','N/A',
+CONCAT('Q',CONCAT(TO_CHAR(TO_DATE(CRE_TS),'Q'),
+CONCAT('-',TO_CHAR(TO_DATE(CRE_TS),'YYYY')))))
+
+------------YYMMDD----------
+
+IIF(ISNULL(OFFR_START_TS) OR IS_DATE(OFFR_START_TS,'MM/DD/YYYY HH12:MM:SS') = 0,TO_CHAR(TO_DATE('01/01/1900','MM/DD/YYYY'),'YYMMDD'),
+TO_CHAR(TO_DATE(OFFR_START_TS,'MM/DD/YYYY HH12:MI:SS'),'YYMMDD'))
+
+--------------------------
+
+UPD_TS:
+IIF(ISNULL(UPD_TS) or UPD_TS='NULL',TO_DATE('01/01/1900','MM/DD/YYYY'),TO_DATE(substr(UPD_TS,1,10),'MM/DD/YYYY'))
+
+ 
+
+
+CRE_DT:
+IIF(ISNULL(CRE_DT) or CRE_DT='NULL',TO_DATE('01/01/1900','MM/DD/YYYY'),
+to_date(iif(instr(
+iif(instr(CRE_DT,'/',1,1)=2,CONCAT('0',CRE_DT),CRE_DT),'/',1,2)=5,concat(concat(substr(iif(instr(CRE_DT,'/',1,1)=2,CONCAT('0',CRE_DT),CRE_DT),1,3),'0'),
+substr(iif(instr(CRE_DT,'/',1,1)=2,CONCAT('0',CRE_DT),CRE_DT),4,6)),CRE_DT),'MM/DD/YYYY'))
+
+-----------------DATE COLUMN HAVING '0'-----------
+
+IIF(ISNULL(OFFR_START_TS) OR INSTR(OFFR_START_TS,'/',1,1) = 0,'N/A',
+TO_CHAR(TO_DATE(SUBSTR(OFFR_START_TS,1,10),'MM/DD/YYYY'),'YYMMDD'))
+
+
+---------------OFFR_START_DT----------------------------------------
+IIF(ISNULL(OFFR_START_DT) or OFFR_START_DT='NULL' OR IS_DATE(OFFR_START_DT,'MM/DD/YYYY HH12:MI:SS') = 1 ,TO_DATE('01/01/1900','MM/DD/YYYY'),
+to_date(iif(instr(
+iif(instr(OFFR_START_DT,'/',1,1)=2,CONCAT('0',OFFR_START_DT),OFFR_START_DT),'/',1,2)=5,concat(concat(substr(iif(instr(OFFR_START_DT,'/',1,1)=2,CONCAT('0',OFFR_START_DT),OFFR_START_DT),1,3),'0'),
+substr(iif(instr(OFFR_START_DT,'/',1,1)=2,CONCAT('0',OFFR_START_DT),OFFR_START_DT),4,6)),OFFR_START_DT),'MM/DD/YYYY'))
+
+
+---------------------RPT_HRCHY--------REMOVE ALL AFTER '.'------------
+
+IIF(ISNULL(UPD_TS) OR UPD_TS= 'NULL' OR UPD_TS= '?',TO_DATE('01/01/1900','MM/DD/YYYY'),
+TO_DATE(SUBSTR(UPD_TS,1,INSTR(UPD_TS,'.',1,1)-1),'MM/DD/YYYY HH12:MI:SSAM'))
+
+-----------------------------------------------------------------
+IIF(ISNULL(ORDER_PLACED_TS) OR ORDER_PLACED_TS = 'NULL',TO_DATE('01/01/1900','MM/DD/YYYY'),
+TO_DATE(ORDER_PLACED_TS,'MM/DD/YYYY HH24:MI:SS'))
+
+------DATE----------------
+
+TO_DATE(SUBSTR(ADJ_RPT_TS1,1,10),'MM/DD/YYYY')
+
+
+-------------HOUR----------------
+
+GET_DATE_PART(ADJ_RPT_TS1,'HH24')
+-------------------------------------------------------------------------------------------------------------------------------------
+
+select (select string_agg(left(value,1),'') from string_split(ContactName,space(1))) from [Northwind].[Customers]
+
+--------------------------------------
+									  
+SELECT CHOOSE(1, 'a', 'b', 'c') AS first, CHOOSE(2, 'a', 'b', 'c') AS second
+									  
+first	second                        
+a		b                             
+									  
+--------------------------------------
+
+SELECT TRY_CONVERT(INT, 100) AS try1, TRY_CONVERT(INT, 'abc') AS try2
+
+try1	try2
+100		NULL
+
+--------------------------------------
+
+SELECT BirthDate,CONVERT(NVARCHAR(50),BirthDate,107) from [Northwind].[Employees]
+
+BirthDate	              BDAY
+1948-12-08 00:00:00.000	  Dec 08, 1948
+
+--------------------------------------
+
+SELECT (SELECT STRING_AGG(UPPER(LEFT(VALUE,1))+SUBSTRING(VALUE,2,0),'') 
+FROM 
+STRING_SPLIT('The latest medical and psychological techniques for living with the electronic office. Easy-to-understand explanations.',SPACE(1)))
+
+--------------------------------------
+SELECT (SELECT STRING_AGG(UPPER(LEFT(VALUE,1))+SUBSTRING(VALUE,2,0),'') 
+FROM 
+STRING_SPLIT(T.Notes,SPACE(1))) from BCMPPBS.titles T
+
+---------------------------------------------------------------------------------------------------------------------------
+
+----------EMAIL------------
+
+IIF(ISNULL(Email_Address),'Not Available',IIF(REG_MATCH(Email_Address,
+'.*@abc.com') = 0,'Invalid Email',Email_Address))
+
+----------ADDR 01----------
+
+SUBSTR (Address,1,instr(Address,',')-1 )
+
+----------ADDR 02-----------
+
+substr(Address,instr(Address,',')+1,(instr(Address,',',1,2)-1)-instr(Address,','))
+
+----------ADDR 03----------
+
+substr(Address,instr(Address,',',1,2)+1,abs((instr(Address,',',1,3)-1)-length(Address)))
